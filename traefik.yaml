@@ -1,0 +1,16 @@
+# STATIC PART OF FILE PROVIDER
+
+log:
+  filePath: "traefik.log"
+  level: DEBUG
+
+entryPoints:
+  myUnsecureEntryPoint:
+    address: 0.0.0.0:80
+  mySecureEntryPoint:
+    address: 0.0.0.0:443
+
+providers:
+  file:
+    filename: traefik-dynamic.yaml
+    watch: true
