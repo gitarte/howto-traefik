@@ -1,0 +1,73 @@
+http:
+  services:
+    myService1:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8081"
+          - url: "http://127.0.0.1:8082"
+          - url: "http://127.0.0.1:8083"
+    myService2:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8084"
+          - url: "http://127.0.0.1:8085"
+          - url: "http://127.0.0.1:8086"
+    myService3:
+      loadBalancer:
+        sticky:
+          cookie:
+            name: my_sticky_cookie_name
+            #secure: true
+        servers:
+          - url: "http://127.0.0.1:8081"
+          - url: "http://127.0.0.1:8082"
+          - url: "http://127.0.0.1:8083"
+          - url: "http://127.0.0.1:8084"
+          - url: "http://127.0.0.1:8085"
+          - url: "http://127.0.0.1:8086"
+  routers:
+    myRouterToService0:
+      rule: "Host(`sp9ag.ddns.net`)"
+      service: myService3
+      tls: 
+        options: tlsoptions
+    myRouterToService1:
+      rule: "Host(`sp9ag.ddns.net`) && PathPrefix(`/v1`)"
+      service: myService1
+      middlewares: myMiddleware1
+      tls:
+        options: tlsoptions
+    myRouterToService2:
+      rule: "Host(`sp9ag.ddns.net`) && PathPrefix(`/v2`)"
+      service: myService2
+      middlewares: myMiddleware1
+      tls: 
+        options: tlsoptions
+    myRouterToService3:
+      rule: "Host(`sp9ag.ddns.net`) && PathPrefix(`/v{[1,2]}/not-public`)"
+      service: myService3
+      middlewares: myMiddleware2
+      tls: 
+        options: tlsoptions
+  middlewares:
+    myMiddleware1:
+      stripprefix:
+        forceSlash: false
+        prefixes:
+          - "/v1"
+          - "/v2"
+    myMiddleware2:
+      redirectregex:
+        regex: ".*/v([1,2])/not-public"
+        replacement: "/v${1}/reject"
+
+
+tls:
+  certificates:
+    - certFile: /etc/letsencrypt/live/sp9ag.ddns.net/fullchain.pem
+      keyFile: /etc/letsencrypt/live/sp9ag.ddns.net/privkey.pem
+  options:
+    tlsoptions:
+      minVersion: VersionTLS12
+
+tcp:
